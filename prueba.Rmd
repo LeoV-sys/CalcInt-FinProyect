@@ -1,0 +1,115 @@
+---
+title: "CALC PROYECT"
+author: "ITIID-CD-01 TEAM 2"
+date: "2025-11-17"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r }
+knitr::opts_chunk$set(echo = TRUE)
+
+# Data simulation (prototype)
+set.seed(123)
+
+# Fase 1 (Replacement): Days 0-10
+fase1_t <- 0:10
+fase1_dau <- 10 * fase1_t * exp(-0.05 * fase1_t^2) + rnorm(11, 0, 5)
+
+# Fase 2 (Partial fractions): Days 11-30
+fase2_t <- 11:30
+fase2_dau <- 5000 / ((fase2_t - 8) * (fase2_t + 5)) + rnorm(20, 0, 5)
+
+# Fase 3 (Direct): Días 31-60
+fase3_t <- 31:60
+fase3_dau <- -0.1 * fase3_t^2 + 5 * fase3_t + 50 + rnorm(30, 0, 5)
+
+# Match the data
+dias <- c(fase1_t, fase2_t, fase3_t)
+usuarios <- c(fase1_dau, fase2_dau, fase3_dau)
+usuarios[usuarios < 0] <- 0 # Ensure there are no negative users
+
+datos_app <- data.frame(dia = dias, dau = usuarios)
+
+# See the generated data
+library(ggplot2)
+ggplot(datos_app, aes(x = dia, y = dau)) +
+  geom_line() +
+  labs(title = "Daily Active Users Simulation (DAU)",
+       x = "Day", y = "Active Users")
+
+library(dplyr)
+
+#  1. Define the base functions (the "formulas") 
+
+# Phase 1: Growth (Days 0-10) -> Exponential model
+# We will use this one for INTEGRATION BY SUBSTITUTION
+f1_base <- function(t) {
+  return(10 * t * exp(-0.05 * t^2))
+}
+
+# Phase 2: Maturation (Days 11-30) -> Rational model
+# We will use this one for PARTIAL FRACTIONS
+f2_base <- function(t) {
+  return(5000 / ((t - 8) * (t + 5)))
+}
+
+# Phase 3: Stabilization (Days 31-60) -> Polynomial model
+# We will use this one for DIRECT INTEGRATION
+f3_base <- function(t) {
+  return(-0.1 * t^2 + 5 * t + 50)
+}
+
+#  2. Generate the simulated data (Prototype) 
+
+# Set a seed so that the random results are reproducible
+set.seed(123)
+
+# Generate time vectors (days)
+dias_f1 <- 0:10
+dias_f2 <- 11:30
+dias_f3 <- 31:60
+
+# Generate the DAU (Users) values by applying the functions
+# and adding random "noise" to simulate real data
+dau_f1 <- f1_base(dias_f1) + rnorm(length(dias_f1), mean = 0, sd = 4)
+dau_f2 <- f2_base(dias_f2) + rnorm(length(dias_f2), mean = 0, sd = 3)
+dau_f3 <- f3_base(dias_f3) + rnorm(length(dias_f3), mean = 0, sd = 5)
+
+# 3. Assemble the dataset (Data Frame) -
+
+# Combine the days and the users
+dias_totales <- c(dias_f1, dias_f2, dias_f3)
+usuarios_totales <- c(dau_f1, dau_f2, dau_f3)
+
+# Create the data frame
+datos_app <- data.frame(dia = dias_totales, dau = usuarios_totales)
+
+# Make sure there are no negative usersd)
+datos_app$dau <- ifelse(datos_app$dau < 0, 0, datos_app$dau)
+
+#  4. Save and Visualize the Data 
+
+# Save the data to a CSV file (this is an "output" of the prototype)
+write.csv(datos_app, "datos_app.csv", row.names = FALSE)
+
+# Visualize the generated data
+grafico_dau <- ggplot(datos_app, aes(x = dia, y = dau)) +
+  geom_point(alpha = 0.6, color = "purple") +  # Real data dots
+  geom_line(alpha = 0.4, color = "purple") +   #Matching line
+  labs(title = "Daily Active Users Simulation (DAU)",
+       subtitle = "Prototype Generated for the Data",
+       x = "Day (t)",
+       y = "Daily Active Users (DAU)") +
+  theme_minimal()
+
+# Show the Graph
+
+print(grafico_dau)
+
+# Show all data
+
+print((datos_app))
+
+```
